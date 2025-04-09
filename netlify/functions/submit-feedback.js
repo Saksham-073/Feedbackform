@@ -1,55 +1,49 @@
-// netlify/functions/submit-feedback.js
-const { createClient } = require('@netlify/functions');
+const { writeFileSync, readFileSync, existsSync, mkdirSync } = require('fs');
+const path = require('path');
 
-// Create a handler for your function
+const DATA_DIR = path.join(__dirname, '..', '.data');
+const FEEDBACK_FILE = path.join(DATA_DIR, 'feedback.json');
+
+if (!existsSync(DATA_DIR)) {
+  mkdirSync(DATA_DIR, { recursive: true });
+}
+
+if (!existsSync(FEEDBACK_FILE)) {
+  writeFileSync(FEEDBACK_FILE, JSON.stringify([]));
+}
+
 exports.handler = async (event, context) => {
-  // Only allow POST requests
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
       body: JSON.stringify({ message: 'Method Not Allowed' }),
-      headers: { 'Content-Type': 'application/json' }
     };
   }
 
   try {
-    // Parse the incoming request body
     const feedback = JSON.parse(event.body);
     
-    // Validate required fields
     if (!feedback.name || !feedback.email || !feedback.message) {
       return {
         statusCode: 400,
         body: JSON.stringify({ message: 'Missing required fields' }),
-        headers: { 'Content-Type': 'application/json' }
       };
     }
 
-    // Use the Netlify KV Store client
-    const { netlifyGraphAuth } = context;
+    const data = JSON.parse(readFileSync(FEEDBACK_FILE));
     
-    // Create a new feedback entry with timestamp
-    const newFeedback = {
+    data.push({
       name: feedback.name,
       email: feedback.email,
       message: feedback.message,
       timestamp: feedback.timestamp || new Date().toISOString(),
-      id: Date.now().toString() // Use timestamp as unique ID
-    };
-
-    // Store in context cache temporarily
-    if (!context.feedbackItems) {
-      context.feedbackItems = [];
-    }
-    context.feedbackItems.push(newFeedback);
-
+    });
+    
+    writeFileSync(FEEDBACK_FILE, JSON.stringify(data, null, 2));
+    
     return {
       statusCode: 201,
-      body: JSON.stringify({ 
-        message: 'Feedback submitted successfully',
-        feedback: newFeedback
-      }),
-      headers: { 'Content-Type': 'application/json' }
+      body: JSON.stringify({ message: 'Feedback submitted successfully' }),
     };
   } catch (error) {
     console.error('Error submitting feedback:', error);
@@ -57,7 +51,6 @@ exports.handler = async (event, context) => {
     return {
       statusCode: 500,
       body: JSON.stringify({ message: 'Internal Server Error' }),
-      headers: { 'Content-Type': 'application/json' }
     };
   }
 };
