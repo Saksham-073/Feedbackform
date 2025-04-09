@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import Head from 'next/head';
 import FeedbackForm from '@/components/FeedbackForm';
-import AdminView from '@/components/Adminview';
+import AdminView from '@/components/AdminView';
 
 
 export default function Home() {
