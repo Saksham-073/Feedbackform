@@ -1,4 +1,4 @@
-# Feedback Collector
+# FeedbackForm
 
 A single-page feedback collector application built with Next.js, React, and Tailwind CSS. It includes both a feedback submission form and an admin view to display all submitted feedback entries.
 
