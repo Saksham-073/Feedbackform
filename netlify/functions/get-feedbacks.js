@@ -1,48 +1,35 @@
-const { NetlifyKV } = require('@netlify/functions');
+const { getStore, connectLambda } = require('@netlify/blobs');
 
-const FEEDBACK_KEY = 'all_feedback';
-
-const handler = async (event, context) => {
-  if (event.httpMethod !== 'GET') {
-    return {
-      statusCode: 405,
-      body: JSON.stringify({ message: 'Method Not Allowed' }),
-    };
-  }
+exports.handler = async (event, context) => {
+  connectLambda(event);
 
   try {
-    const { netlifyKv } = context;
-    
-    let data = [];
-    try {
-      const existingData = await netlifyKv.get(FEEDBACK_KEY);
-      if (existingData) {
-        data = JSON.parse(existingData);
-      }
-    } catch (err) {
-      console.log('No existing data found, returning empty array');
-    }
-    
-    data.sort((a, b) => {
-      return new Date(b.timestamp) - new Date(a.timestamp);
-    });
-    
+    const store = getStore('feedbacks');
+    const list = await store.list();
+
+    const feedbacks = await Promise.all(
+      list.blobs.map(async (blob) => {
+        const response = await store.get(blob.key); 
+        const result = JSON.parse(response);       
+
+        return {
+          name: result.name,
+          email: result.email,
+          message: result.message,
+          timestamp: result.timestamp,
+        };
+      })
+    );
+
     return {
       statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache'
-      },
-      body: JSON.stringify(data),
+      body: JSON.stringify(feedbacks),
     };
   } catch (error) {
-    console.error('Error retrieving feedback:', error);
-    
+    console.error('❌ Error retrieving feedback:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: 'Internal Server Error', error: error.toString() }),
+      body: JSON.stringify({ error: 'Internal Server Error', detail: error.message }),
     };
   }
 };
-
-exports.handler = NetlifyKV(handler);

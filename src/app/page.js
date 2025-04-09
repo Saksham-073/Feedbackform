@@ -7,7 +7,7 @@ import AdminView from '@/components/AdminView';
 export default function Home() {
   const [showAdmin, setShowAdmin] = useState(false);
   const [theme, setTheme] = useState('light');
-  const [refreshKey, setRefreshKey] = useState(0); // NEW
+  const [refreshKey, setRefreshKey] = useState(0); 
 
   const toggleTheme = () => {
     setTheme(theme === 'light' ? 'dark' : 'light');

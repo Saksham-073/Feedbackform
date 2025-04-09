@@ -1,10 +1,8 @@
+const { getStore, connectLambda } = require('@netlify/blobs');
 
-const { NetlifyKV } = require('@netlify/functions');
+exports.handler = async (event, context) => {
+  connectLambda(event);
 
-const FEEDBACK_KEY = 'all_feedback';
-
-const handler = async (event, context) => {
-  
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -13,49 +11,34 @@ const handler = async (event, context) => {
   }
 
   try {
-    const feedback = JSON.parse(event.body);
-    
-    if (!feedback.name || !feedback.email || !feedback.message) {
+    const { name, email, message } = JSON.parse(event.body);
+
+    if (!name || !email || !message) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ message: 'Missing required fields' }),
+        body: JSON.stringify({ error: 'All fields are required' }),
       };
     }
 
-    const { netlifyKv } = context;
-    
-    let data = [];
-    try {
-      const existingData = await netlifyKv.get(FEEDBACK_KEY);
-      if (existingData) {
-        data = JSON.parse(existingData);
-      }
-    } catch (err) {
-      console.log('No existing data found, creating new array');
-    }
-    
-    data.push({
-      id: Date.now().toString(), 
-      name: feedback.name,
-      email: feedback.email,
-      message: feedback.message,
-      timestamp: feedback.timestamp || new Date().toISOString(),
+    const store = getStore('feedbacks');
+    const key = `feedback-${Date.now()}`;
+
+    await store.setJSON(key, {
+      name,
+      email,
+      message,
+      timestamp: new Date().toISOString(),
     });
-    
-    await netlifyKv.set(FEEDBACK_KEY, JSON.stringify(data));
-    
+
     return {
-      statusCode: 201,
-      body: JSON.stringify({ message: 'Feedback submitted successfully' }),
+      statusCode: 200,
+      body: JSON.stringify({ message: 'Feedback submitted successfully!' }),
     };
   } catch (error) {
-    console.error('Error submitting feedback:', error);
-    
+    console.error('❌ Error submitting feedback:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: 'Internal Server Error', error: error.toString() }),
+      body: JSON.stringify({ error: 'Internal Server Error', detail: error.message }),
     };
   }
 };
-
-exports.handler = NetlifyKV(handler);
