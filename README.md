@@ -17,7 +17,7 @@ A single-page feedback collector application built with Next.js, React, and Tail
 ## Tech Stack
 
 - **Frontend**: Next.js, React, Tailwind CSS
-- **Backend**: Netlify Functions
+- **Backend**: Netlify Forms, Netlify Functions
 - **Deployment**: Netlify
 
 ## Project Structure
@@ -77,11 +77,33 @@ This project is configured for easy deployment to Netlify:
 1. Push your code to a GitHub repository.
 2. Create a new site on Netlify and connect it to your GitHub repository.
 3. Netlify will automatically detect the build settings from the `netlify.toml` file.
-4. Once deployed, your feedback collector will be live and ready to use!
+4. Set up environment variables in the Netlify dashboard:
+   - `NETLIFY_API_TOKEN`: Your Netlify personal access token
+   - `SITE_ID`: Your Netlify site ID
+
+### Setting Up Netlify Forms
+
+1. Netlify will automatically detect the form in your HTML with the `data-netlify="true"` attribute.
+2. After the first form submission, Netlify will create the form in your site's Forms section.
+3. You can view all submissions in the Netlify dashboard under the Forms tab.
+4. The admin view in your application will use the Netlify API to display submissions.
+
+### Getting Your Netlify API Token
+
+1. Go to your Netlify user settings (click your avatar, then "User settings")
+2. Click "Applications" in the left sidebar
+3. Under "Personal access tokens", click "New access token"
+4. Give it a description and click "Generate token"
+5. Copy the token and add it as an environment variable in your Netlify site settings
+
+### Getting Your Site ID
+
+1. Go to your site settings in Netlify
+2. Your Site ID is displayed at the top of the General settings page
 
 ## Live Demo
 
-You can view the live application at: https://feedbackform-15.netlify.app/
+You can view the live application at: 
 
 ## Credits
 

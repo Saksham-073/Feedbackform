@@ -1,13 +1,12 @@
-"use client"
 import { useState } from 'react';
 
-export default function FeedbackForm({ theme, onSubmitSuccess }) {
+export default function FeedbackForm({ theme }) {
   const [formState, setFormState] = useState({
     name: '',
     email: '',
     message: ''
   });
-
+  
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null);
@@ -29,79 +28,61 @@ export default function FeedbackForm({ theme, onSubmitSuccess }) {
 
   const validateForm = () => {
     const newErrors = {};
-
+    
     if (!formState.name.trim()) {
       newErrors.name = 'Name is required';
     }
-
+    
     if (!formState.email.trim()) {
       newErrors.email = 'Email is required';
     } else if (!/^\S+@\S+\.\S+$/.test(formState.email)) {
       newErrors.email = 'Email is invalid';
     }
-
+    
     if (!formState.message.trim()) {
       newErrors.message = 'Feedback message is required';
     }
-
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
 
-    if (!validateForm()) return;
-
-    setIsSubmitting(true);
-    setSubmitStatus(null);
-
-    try {
-      const response = await fetch('/.netlify/functions/submit-feedback', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...formState,
-          timestamp: new Date().toISOString()
-        }),
-      });
-
-      if (response.ok) {
-        setFormState({ name: '', email: '', message: '' });
-        setSubmitStatus('success');
-        if (onSubmitSuccess) onSubmitSuccess(); 
-      } else {
-        setSubmitStatus('error');
-      }
-    } catch (error) {
-      console.error('Error submitting feedback:', error);
-      setSubmitStatus('error');
-    } finally {
-      setIsSubmitting(false);
+    if (!validateForm()) {
+      e.preventDefault();
+      return;
     }
+    
+    setIsSubmitting(true);
   };
 
   return (
     <div className={`max-w-md mx-auto ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-md p-6 transition-all`}>
       <h2 className="text-2xl font-bold mb-6">Share Your Feedback</h2>
-
+      
       {submitStatus === 'success' && (
         <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-md animate-fadeIn">
           Thank you for your feedback!
         </div>
       )}
-
-      {submitStatus === 'error' && (
-        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md animate-fadeIn">
-          There was an error submitting your feedback. Please try again.
+      
+      <form 
+        name="feedback" 
+        method="POST" 
+        data-netlify="true" 
+        data-netlify-honeypot="bot-field"
+        onSubmit={handleSubmit}
+      >
+        <input type="hidden" name="form-name" value="feedback" />
+        <div hidden>
+          <input name="bot-field" />
         </div>
-      )}
 
-      <form onSubmit={handleSubmit}>
         <div className="mb-4">
-          <label htmlFor="name" className="block mb-2">Full Name</label>
+          <label htmlFor="name" className="block mb-2">
+            Full Name
+          </label>
           <input
             type="text"
             id="name"
@@ -111,14 +92,16 @@ export default function FeedbackForm({ theme, onSubmitSuccess }) {
             className={`w-full px-3 py-2 border rounded-md ${
               theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-300'
             } focus:outline-none ${
-              errors.name ? 'border-red-500' : 'focus:border-blue-500'
+              errors.name ? 'border-red-500' : `focus:border-blue-500`
             }`}
           />
           {errors.name && <p className="mt-1 text-red-500 text-sm">{errors.name}</p>}
         </div>
-
+        
         <div className="mb-4">
-          <label htmlFor="email" className="block mb-2">Email Address</label>
+          <label htmlFor="email" className="block mb-2">
+            Email Address
+          </label>
           <input
             type="email"
             id="email"
@@ -128,14 +111,16 @@ export default function FeedbackForm({ theme, onSubmitSuccess }) {
             className={`w-full px-3 py-2 border rounded-md ${
               theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-300'
             } focus:outline-none ${
-              errors.email ? 'border-red-500' : 'focus:border-blue-500'
+              errors.email ? 'border-red-500' : `focus:border-blue-500`
             }`}
           />
           {errors.email && <p className="mt-1 text-red-500 text-sm">{errors.email}</p>}
         </div>
-
+        
         <div className="mb-6">
-          <label htmlFor="message" className="block mb-2">Feedback Message</label>
+          <label htmlFor="message" className="block mb-2">
+            Feedback Message
+          </label>
           <textarea
             id="message"
             name="message"
@@ -145,12 +130,12 @@ export default function FeedbackForm({ theme, onSubmitSuccess }) {
             className={`w-full px-3 py-2 border rounded-md ${
               theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-300'
             } focus:outline-none ${
-              errors.message ? 'border-red-500' : 'focus:border-blue-500'
+              errors.message ? 'border-red-500' : `focus:border-blue-500`
             }`}
           ></textarea>
           {errors.message && <p className="mt-1 text-red-500 text-sm">{errors.message}</p>}
         </div>
-
+        
         <button
           type="submit"
           disabled={isSubmitting}
@@ -172,6 +157,12 @@ export default function FeedbackForm({ theme, onSubmitSuccess }) {
             'Submit Feedback'
           )}
         </button>
+        
+        <p className="hidden">
+          <label>
+            Don't fill this out if you're human: <input name="bot-field" />
+          </label>
+        </p>
       </form>
     </div>
   );
