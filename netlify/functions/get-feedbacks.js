@@ -1,7 +1,7 @@
-const { getStore, connectLambda } = require('@netlify/blobs');
+const { getStore, connectBlob } = require('@netlify/blobs');
 
 exports.handler = async (event, context) => {
-  connectLambda(event);
+  connectBlob();
 
   try {
     const store = getStore('feedbacks');
@@ -9,8 +9,7 @@ exports.handler = async (event, context) => {
 
     const feedbacks = await Promise.all(
       list.blobs.map(async (blob) => {
-        const response = await store.get(blob.key); 
-        const result = JSON.parse(response);       
+        const result = await store.getJSON(blob.key); 
 
         return {
           name: result.name,

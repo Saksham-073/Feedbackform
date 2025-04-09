@@ -1,7 +1,7 @@
-const { getStore, connectLambda } = require('@netlify/blobs');
+const { getStore, connectBlob } = require('@netlify/blobs');
 
 exports.handler = async (event, context) => {
-  connectLambda(event); 
+  connectBlob(); 
 
   if (event.httpMethod !== 'POST') {
     return {
