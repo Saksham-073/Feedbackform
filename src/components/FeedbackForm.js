@@ -17,7 +17,7 @@ export default function FeedbackForm({ theme }) {
       ...formState,
       [name]: value
     });
-
+    
     if (errors[name]) {
       setErrors({
         ...errors,
@@ -48,13 +48,39 @@ export default function FeedbackForm({ theme }) {
   };
 
   const handleSubmit = async (e) => {
-
+    e.preventDefault();
+    
     if (!validateForm()) {
-      e.preventDefault();
       return;
     }
     
     setIsSubmitting(true);
+    setSubmitStatus(null);
+    
+    try {
+      const response = await fetch('/.netlify/functions/submit-feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...formState,
+          timestamp: new Date().toISOString()
+        }),
+      });
+      
+      if (response.ok) {
+        setFormState({ name: '', email: '', message: '' });
+        setSubmitStatus('success');
+      } else {
+        setSubmitStatus('error');
+      }
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      setSubmitStatus('error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -67,18 +93,13 @@ export default function FeedbackForm({ theme }) {
         </div>
       )}
       
-      <form 
-        name="feedback" 
-        method="POST" 
-        data-netlify="true" 
-        data-netlify-honeypot="bot-field"
-        onSubmit={handleSubmit}
-      >
-        <input type="hidden" name="form-name" value="feedback" />
-        <div hidden>
-          <input name="bot-field" />
+      {submitStatus === 'error' && (
+        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md animate-fadeIn">
+          There was an error submitting your feedback. Please try again.
         </div>
-
+      )}
+      
+      <form onSubmit={handleSubmit}>
         <div className="mb-4">
           <label htmlFor="name" className="block mb-2">
             Full Name
@@ -157,12 +178,6 @@ export default function FeedbackForm({ theme }) {
             'Submit Feedback'
           )}
         </button>
-        
-        <p className="hidden">
-          <label>
-            Don't fill this out if you're human: <input name="bot-field" />
-          </label>
-        </p>
       </form>
     </div>
   );

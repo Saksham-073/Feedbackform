@@ -1,4 +1,4 @@
-// components/AdminView.js
+
 import { useState, useEffect } from 'react';
 
 export default function AdminView({ theme }) {
@@ -13,7 +13,7 @@ export default function AdminView({ theme }) {
   const fetchFeedbacks = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/.netlify/functions/get-netlify-forms');
+      const response = await fetch('/.netlify/functions/get-feedbacks');
       
       if (!response.ok) {
         throw new Error('Failed to fetch feedbacks');
