@@ -1,4 +1,4 @@
-# FeedbackForm
+# Feedback Collector
 
 A single-page feedback collector application built with Next.js, React, and Tailwind CSS. It includes both a feedback submission form and an admin view to display all submitted feedback entries.
 
@@ -81,7 +81,7 @@ This project is configured for easy deployment to Netlify:
 
 ## Live Demo
 
-You can view the live application at: 
+You can view the live application at: https://feedbackform-15.netlify.app/
 
 ## Credits
 
