@@ -1,23 +1,6 @@
-// netlify/functions/submit-feedback.js
-const { writeFileSync, readFileSync, existsSync, mkdirSync } = require('fs');
-const path = require('path');
-
-// Define a data storage location
-const DATA_DIR = path.join(__dirname, '..', '.data');
-const FEEDBACK_FILE = path.join(DATA_DIR, 'feedback.json');
-
-// Ensure the data directory exists
-if (!existsSync(DATA_DIR)) {
-  mkdirSync(DATA_DIR, { recursive: true });
-}
-
-// Initialize feedback file if it doesn't exist
-if (!existsSync(FEEDBACK_FILE)) {
-  writeFileSync(FEEDBACK_FILE, JSON.stringify([]));
-}
+const { getStore } = require('@netlify/blobs');
 
 exports.handler = async (event, context) => {
-  // Only allow POST requests
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -26,10 +9,8 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    // Parse the incoming request body
     const feedback = JSON.parse(event.body);
-    
-    // Validate required fields
+
     if (!feedback.name || !feedback.email || !feedback.message) {
       return {
         statusCode: 400,
@@ -37,30 +18,36 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Read existing feedback data
-    const data = JSON.parse(readFileSync(FEEDBACK_FILE));
-    
-    // Add the new feedback
-    data.push({
+    const newFeedback = {
       name: feedback.name,
       email: feedback.email,
       message: feedback.message,
       timestamp: feedback.timestamp || new Date().toISOString(),
-    });
-    
-    // Write back to the file
-    writeFileSync(FEEDBACK_FILE, JSON.stringify(data, null, 2));
-    
+      id: Date.now().toString(),
+    };
+
+    // Initialize the store
+    const store = getStore('feedbackList');
+
+    // Retrieve the current feedback list
+    let feedbackList = await store.get('feedbackList.json') || [];
+
+    // Add the new feedback
+    feedbackList.push(newFeedback);
+
+    // Save the updated feedback list back to the store
+    await store.set('feedbackList.json', feedbackList);
+
     return {
       statusCode: 201,
       body: JSON.stringify({ message: 'Feedback submitted successfully' }),
     };
   } catch (error) {
     console.error('Error submitting feedback:', error);
-    
+
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: 'Internal Server Error' }),
+      body: JSON.stringify({ message: error.toString() }),
     };
   }
 };

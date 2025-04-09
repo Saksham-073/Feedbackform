@@ -1,13 +1,6 @@
-// netlify/functions/get-feedbacks.js
-const { readFileSync, existsSync } = require('fs');
-const path = require('path');
-
-// Define the data file location
-const DATA_DIR = path.join(__dirname, '..', '.data');
-const FEEDBACK_FILE = path.join(DATA_DIR, 'feedback.json');
+const { getStore } = require('@netlify/blobs');
 
 exports.handler = async (event, context) => {
-  // Only allow GET requests
   if (event.httpMethod !== 'GET') {
     return {
       statusCode: 405,
@@ -16,32 +9,25 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    // Check if the feedback file exists
-    if (!existsSync(FEEDBACK_FILE)) {
-      return {
-        statusCode: 200,
-        body: JSON.stringify([]),
-      };
-    }
+    // Initialize the store
+    const store = getStore('feedbackList');
 
-    // Read and return the feedback data
-    const data = JSON.parse(readFileSync(FEEDBACK_FILE));
-    
-    // Sort by timestamp, newest first
-    data.sort((a, b) => {
-      return new Date(b.timestamp) - new Date(a.timestamp);
-    });
-    
+    // Retrieve the feedback list from the store
+    const feedbackList = await store.get('feedbackList.json') || [];
+
+    // Sort feedback by timestamp in descending order
+    feedbackList.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
     return {
       statusCode: 200,
-      body: JSON.stringify(data),
+      body: JSON.stringify(feedbackList),
     };
   } catch (error) {
     console.error('Error retrieving feedback:', error);
-    
+
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: 'Internal Server Error' }),
+      body: JSON.stringify({ message: error.toString() }),
     };
   }
 };
