@@ -1,8 +1,6 @@
-const { getStore, connectBlob } = require('@netlify/blobs');
+const { getStore } = require('@netlify/blobs');
 
 exports.handler = async (event, context) => {
-  connectBlob(); 
-
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -21,8 +19,8 @@ exports.handler = async (event, context) => {
     }
 
     const store = getStore('feedbacks');
+    const key = `feedback-${Date.now()}`;
     const timestamp = new Date().toISOString();
-    const key = `feedback-${Date.now()}`; 
 
     await store.setJSON(key, {
       name,

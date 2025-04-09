@@ -1,34 +1,26 @@
-const { getStore, connectBlob } = require('@netlify/blobs');
+const { getStore } = require('@netlify/blobs');
 
 exports.handler = async (event, context) => {
-  connectBlob();
+  const store = getStore('feedbacks');
 
   try {
-    const store = getStore('feedbacks');
     const list = await store.list();
+    const feedbacks = [];
 
-    const feedbacks = await Promise.all(
-      list.blobs.map(async (blob) => {
-        const result = await store.getJSON(blob.key); 
-
-        return {
-          name: result.name,
-          email: result.email,
-          message: result.message,
-          timestamp: result.timestamp,
-        };
-      })
-    );
+    for (const key of list.blobs) {
+      const feedback = await store.getJSON(key);
+      feedbacks.push({ key, ...feedback });
+    }
 
     return {
       statusCode: 200,
       body: JSON.stringify(feedbacks),
     };
   } catch (error) {
-    console.error('❌ Error retrieving feedback:', error);
+    console.error('Error fetching feedbacks:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Internal Server Error', detail: error.message }),
+      body: JSON.stringify({ error: 'Failed to fetch feedbacks' }),
     };
   }
 };
