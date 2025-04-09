@@ -1,6 +1,8 @@
-const { getStore } = require('@netlify/blobs');
+const { getStore, connectLambda } = require('@netlify/blobs');
 
 exports.handler = async (event, context) => {
+  connectLambda(event); 
+
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -9,45 +11,35 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const feedback = JSON.parse(event.body);
+    const { name, email, message } = JSON.parse(event.body);
 
-    if (!feedback.name || !feedback.email || !feedback.message) {
+    if (!name || !email || !message) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ message: 'Missing required fields' }),
+        body: JSON.stringify({ error: 'All fields are required' }),
       };
     }
 
-    const newFeedback = {
-      name: feedback.name,
-      email: feedback.email,
-      message: feedback.message,
-      timestamp: feedback.timestamp || new Date().toISOString(),
-      id: Date.now().toString(),
-    };
+    const store = getStore('feedbacks');
+    const timestamp = new Date().toISOString();
+    const key = `feedback-${Date.now()}`; 
 
-    // Initialize the store
-    const store = getStore('feedbackList');
-
-    // Retrieve the current feedback list
-    let feedbackList = await store.get('feedbackList.json') || [];
-
-    // Add the new feedback
-    feedbackList.push(newFeedback);
-
-    // Save the updated feedback list back to the store
-    await store.set('feedbackList.json', feedbackList);
+    await store.setJSON(key, {
+      name,
+      email,
+      message,
+      timestamp,
+    });
 
     return {
-      statusCode: 201,
-      body: JSON.stringify({ message: 'Feedback submitted successfully' }),
+      statusCode: 200,
+      body: JSON.stringify({ message: 'Feedback submitted successfully!' }),
     };
   } catch (error) {
     console.error('Error submitting feedback:', error);
-
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: error.toString() }),
+      body: JSON.stringify({ error: 'Internal Server Error' }),
     };
   }
 };

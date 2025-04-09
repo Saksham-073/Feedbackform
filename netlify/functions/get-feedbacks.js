@@ -1,33 +1,35 @@
-const { getStore } = require('@netlify/blobs');
+const { getStore, connectLambda } = require('@netlify/blobs');
 
 exports.handler = async (event, context) => {
-  if (event.httpMethod !== 'GET') {
-    return {
-      statusCode: 405,
-      body: JSON.stringify({ message: 'Method Not Allowed' }),
-    };
-  }
+  connectLambda(event);
 
   try {
-    // Initialize the store
-    const store = getStore('feedbackList');
+    const store = getStore('feedbacks');
+    const list = await store.list();
 
-    // Retrieve the feedback list from the store
-    const feedbackList = await store.get('feedbackList.json') || [];
+    const feedbacks = await Promise.all(
+      list.blobs.map(async (blob) => {
+        const response = await store.get(blob.key); 
+        const result = JSON.parse(response);       
 
-    // Sort feedback by timestamp in descending order
-    feedbackList.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        return {
+          name: result.name,
+          email: result.email,
+          message: result.message,
+          timestamp: result.timestamp,
+        };
+      })
+    );
 
     return {
       statusCode: 200,
-      body: JSON.stringify(feedbackList),
+      body: JSON.stringify(feedbacks),
     };
   } catch (error) {
-    console.error('Error retrieving feedback:', error);
-
+    console.error('❌ Error retrieving feedback:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: error.toString() }),
+      body: JSON.stringify({ error: 'Internal Server Error', detail: error.message }),
     };
   }
 };

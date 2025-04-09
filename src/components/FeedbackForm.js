@@ -1,13 +1,13 @@
 "use client"
 import { useState } from 'react';
 
-export default function FeedbackForm({ theme }) {
+export default function FeedbackForm({ theme, onSubmitSuccess }) {
   const [formState, setFormState] = useState({
     name: '',
     email: '',
     message: ''
   });
-  
+
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null);
@@ -18,7 +18,7 @@ export default function FeedbackForm({ theme }) {
       ...formState,
       [name]: value
     });
-    
+
     if (errors[name]) {
       setErrors({
         ...errors,
@@ -29,35 +29,33 @@ export default function FeedbackForm({ theme }) {
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formState.name.trim()) {
       newErrors.name = 'Name is required';
     }
-    
+
     if (!formState.email.trim()) {
       newErrors.email = 'Email is required';
     } else if (!/^\S+@\S+\.\S+$/.test(formState.email)) {
       newErrors.email = 'Email is invalid';
     }
-    
+
     if (!formState.message.trim()) {
       newErrors.message = 'Feedback message is required';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
-    
+
+    if (!validateForm()) return;
+
     setIsSubmitting(true);
     setSubmitStatus(null);
-    
+
     try {
       const response = await fetch('/.netlify/functions/submit-feedback', {
         method: 'POST',
@@ -69,10 +67,11 @@ export default function FeedbackForm({ theme }) {
           timestamp: new Date().toISOString()
         }),
       });
-      
+
       if (response.ok) {
         setFormState({ name: '', email: '', message: '' });
         setSubmitStatus('success');
+        if (onSubmitSuccess) onSubmitSuccess(); 
       } else {
         setSubmitStatus('error');
       }
@@ -87,24 +86,22 @@ export default function FeedbackForm({ theme }) {
   return (
     <div className={`max-w-md mx-auto ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-md p-6 transition-all`}>
       <h2 className="text-2xl font-bold mb-6">Share Your Feedback</h2>
-      
+
       {submitStatus === 'success' && (
         <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-md animate-fadeIn">
           Thank you for your feedback!
         </div>
       )}
-      
+
       {submitStatus === 'error' && (
         <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md animate-fadeIn">
           There was an error submitting your feedback. Please try again.
         </div>
       )}
-      
+
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
-          <label htmlFor="name" className="block mb-2">
-            Full Name
-          </label>
+          <label htmlFor="name" className="block mb-2">Full Name</label>
           <input
             type="text"
             id="name"
@@ -114,16 +111,14 @@ export default function FeedbackForm({ theme }) {
             className={`w-full px-3 py-2 border rounded-md ${
               theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-300'
             } focus:outline-none ${
-              errors.name ? 'border-red-500' : `focus:border-blue-500`
+              errors.name ? 'border-red-500' : 'focus:border-blue-500'
             }`}
           />
           {errors.name && <p className="mt-1 text-red-500 text-sm">{errors.name}</p>}
         </div>
-        
+
         <div className="mb-4">
-          <label htmlFor="email" className="block mb-2">
-            Email Address
-          </label>
+          <label htmlFor="email" className="block mb-2">Email Address</label>
           <input
             type="email"
             id="email"
@@ -133,16 +128,14 @@ export default function FeedbackForm({ theme }) {
             className={`w-full px-3 py-2 border rounded-md ${
               theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-300'
             } focus:outline-none ${
-              errors.email ? 'border-red-500' : `focus:border-blue-500`
+              errors.email ? 'border-red-500' : 'focus:border-blue-500'
             }`}
           />
           {errors.email && <p className="mt-1 text-red-500 text-sm">{errors.email}</p>}
         </div>
-        
+
         <div className="mb-6">
-          <label htmlFor="message" className="block mb-2">
-            Feedback Message
-          </label>
+          <label htmlFor="message" className="block mb-2">Feedback Message</label>
           <textarea
             id="message"
             name="message"
@@ -152,12 +145,12 @@ export default function FeedbackForm({ theme }) {
             className={`w-full px-3 py-2 border rounded-md ${
               theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-300'
             } focus:outline-none ${
-              errors.message ? 'border-red-500' : `focus:border-blue-500`
+              errors.message ? 'border-red-500' : 'focus:border-blue-500'
             }`}
           ></textarea>
           {errors.message && <p className="mt-1 text-red-500 text-sm">{errors.message}</p>}
         </div>
-        
+
         <button
           type="submit"
           disabled={isSubmitting}

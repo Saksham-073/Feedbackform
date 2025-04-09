@@ -4,10 +4,10 @@ import Head from 'next/head';
 import FeedbackForm from '@/components/FeedbackForm';
 import AdminView from '@/components/AdminView';
 
-
 export default function Home() {
   const [showAdmin, setShowAdmin] = useState(false);
   const [theme, setTheme] = useState('light');
+  const [refreshKey, setRefreshKey] = useState(0); // NEW
 
   const toggleTheme = () => {
     setTheme(theme === 'light' ? 'dark' : 'light');
@@ -49,7 +49,9 @@ export default function Home() {
         </header>
 
         <div className="animate-fadeIn">
-          {showAdmin ? <AdminView theme={theme} /> : <FeedbackForm theme={theme} />}
+          {showAdmin 
+            ? <AdminView key={refreshKey} theme={theme} /> 
+            : <FeedbackForm theme={theme} onSubmitSuccess={() => setRefreshKey(prev => prev + 1)} />}
         </div>
 
         <footer className={`mt-16 py-4 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
