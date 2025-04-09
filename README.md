@@ -88,22 +88,10 @@ This project is configured for easy deployment to Netlify:
 3. You can view all submissions in the Netlify dashboard under the Forms tab.
 4. The admin view in your application will use the Netlify API to display submissions.
 
-### Getting Your Netlify API Token
-
-1. Go to your Netlify user settings (click your avatar, then "User settings")
-2. Click "Applications" in the left sidebar
-3. Under "Personal access tokens", click "New access token"
-4. Give it a description and click "Generate token"
-5. Copy the token and add it as an environment variable in your Netlify site settings
-
-### Getting Your Site ID
-
-1. Go to your site settings in Netlify
-2. Your Site ID is displayed at the top of the General settings page
 
 ## Live Demo
 
-You can view the live application at: 
+You can view the live application at: https://feedbackform-15.netlify.app/
 
 ## Credits
 
