@@ -1,18 +1,10 @@
-const { writeFileSync, readFileSync, existsSync, mkdirSync } = require('fs');
-const path = require('path');
 
-const DATA_DIR = path.join(__dirname, '..', '.data');
-const FEEDBACK_FILE = path.join(DATA_DIR, 'feedback.json');
+const { NetlifyKV } = require('@netlify/functions');
 
-if (!existsSync(DATA_DIR)) {
-  mkdirSync(DATA_DIR, { recursive: true });
-}
+const FEEDBACK_KEY = 'all_feedback';
 
-if (!existsSync(FEEDBACK_FILE)) {
-  writeFileSync(FEEDBACK_FILE, JSON.stringify([]));
-}
-
-exports.handler = async (event, context) => {
+const handler = async (event, context) => {
+  
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -30,16 +22,27 @@ exports.handler = async (event, context) => {
       };
     }
 
-    const data = JSON.parse(readFileSync(FEEDBACK_FILE));
+    const { netlifyKv } = context;
+    
+    let data = [];
+    try {
+      const existingData = await netlifyKv.get(FEEDBACK_KEY);
+      if (existingData) {
+        data = JSON.parse(existingData);
+      }
+    } catch (err) {
+      console.log('No existing data found, creating new array');
+    }
     
     data.push({
+      id: Date.now().toString(), 
       name: feedback.name,
       email: feedback.email,
       message: feedback.message,
       timestamp: feedback.timestamp || new Date().toISOString(),
     });
     
-    writeFileSync(FEEDBACK_FILE, JSON.stringify(data, null, 2));
+    await netlifyKv.set(FEEDBACK_KEY, JSON.stringify(data));
     
     return {
       statusCode: 201,
@@ -50,7 +53,9 @@ exports.handler = async (event, context) => {
     
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: 'Internal Server Error' }),
+      body: JSON.stringify({ message: 'Internal Server Error', error: error.toString() }),
     };
   }
 };
+
+exports.handler = NetlifyKV(handler);
